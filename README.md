@@ -1,6 +1,7 @@
 # WeGo Transit Map
 
-[![Node CI](https://github.com/transitnownash/wego-bus-map/actions/workflows/nodejs.yml/badge.svg)](https://github.com/transitnownash/wego-bus-map/actions/workflows/nodejs.yml) [![CodeQL](https://github.com/transitnownash/wego-bus-map/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/transitnownash/wego-bus-map/actions/workflows/codeql-analysis.yml)
+Don't use this lol, it's a stupid fork with a bunch of hacked either by my small webdev brain that barely understands JS or a stupid LLM with no context. All this does it have some goofy changes that I need for a project but that are completely stupid and useless outside of it.
+
 
 ![screenshot](screenshot.png)
 
