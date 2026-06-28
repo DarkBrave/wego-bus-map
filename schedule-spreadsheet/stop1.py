@@ -1,0 +1,115 @@
+import pandas as pd
+import argparse
+import os
+
+
+# ---------------- time helpers ----------------
+def time_to_minutes(t: str) -> float:
+    h, m, s = map(int, t.split(":"))
+    return h * 60 + m + s / 60
+
+
+def minutes_to_label(m: int) -> str:
+    return f"{m // 60:02d}:{m % 60:02d}"
+
+
+# ---------------- load GTFS ----------------
+def load_gtfs(folder):
+    trips = pd.read_csv(os.path.join(folder, "trips.txt"))
+    stop_times = pd.read_csv(os.path.join(folder, "stop_times.txt"))
+    stops = pd.read_csv(os.path.join(folder, "stops.txt"))
+    calendar = pd.read_csv(os.path.join(folder, "calendar.txt"))
+    return trips, stop_times, stops, calendar
+
+
+# ---------------- build stop timetable ----------------
+def build_stop_timetable(trips, stop_times, calendar, stop_id):
+
+    # -----------------------------
+    # 1. FILTER TO 85.* (your chosen season)
+    # -----------------------------
+    calendar = calendar[calendar["service_id"].astype(str).str.startswith("85")]
+
+    # -----------------------------
+    # 2. TUESDAY ONLY
+    # -----------------------------
+    service_ids = calendar[calendar["tuesday"] == 1]["service_id"]
+    trips = trips[trips["service_id"].isin(service_ids)]
+
+    # clean
+    trips = trips.drop_duplicates(subset=["trip_id"])
+
+    # -----------------------------
+    # 3. FILTER STOP TIMES TO STOP
+    # -----------------------------
+    stop_times = stop_times[stop_times["stop_id"] == stop_id].copy()
+
+    # join trip info
+    df = stop_times.merge(
+        trips[["trip_id", "route_id", "direction_id"]],
+        on="trip_id",
+        how="inner"
+    )
+
+    df["direction_id"] = df["direction_id"].fillna(0).astype(int)
+
+    # -----------------------------
+    # 4. TIME PROCESSING
+    # -----------------------------
+    df["minute"] = df["departure_time"].apply(time_to_minutes)
+
+    # 5-minute bins
+    df["bin"] = (df["minute"] // 5) * 5
+    df["time"] = df["bin"].astype(int).apply(minutes_to_label)
+
+    # route-direction label
+    df["route_dir"] = (
+        df["route_id"].astype(str)
+        + " ("
+        + df["direction_id"].astype(str)
+        + ")"
+    )
+
+    # -----------------------------
+    # 5. PIVOT TIMETABLE
+    # -----------------------------
+    grid = (
+        df.groupby(["time", "route_dir"])
+        .size()
+        .unstack(fill_value=0)
+    )
+
+    # full day index
+    full_times = [minutes_to_label(m) for m in range(0, 1440, 5)]
+    grid = grid.reindex(full_times, fill_value=0)
+
+    return grid
+
+
+# ---------------- main ----------------
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("gtfs_folder")
+    parser.add_argument("stop_id", help="GTFS stop_id (from stops.txt)")
+    parser.add_argument("--out", default="stop_timetable.csv")
+
+    args = parser.parse_args()
+
+    trips, stop_times, stops, calendar = load_gtfs(args.gtfs_folder)
+
+    print(f"Building timetable for stop: {args.stop_id}")
+
+    grid = build_stop_timetable(trips, stop_times, calendar, args.stop_id)
+
+    print("Saving...")
+
+    if args.out.endswith(".xlsx"):
+        grid.to_excel(args.out)
+    else:
+        grid.to_csv(args.out)
+
+    print(f"Done → {args.out}")
+
+
+if __name__ == "__main__":
+    main()
