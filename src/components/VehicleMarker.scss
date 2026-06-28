@@ -6,3 +6,45 @@
   padding: 0.5rem 1rem;
   font-weight: bold;
 }
+
+.vehicle-marker {
+  position: relative;
+}
+
+/* wrapper keeps icon centered */
+.vehicle-wrapper {
+  width: 32px;
+  height: 32px;
+  position: relative;
+}
+
+/* your actual SVG/icon */
+.vehicle-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* triangle overlay */
+.vehicle-marker::after {
+  content: "";
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  width: 0;
+  height: 0;
+
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #ffffff;
+
+  transform-origin: center;
+
+  /* orbit around center using CSS variable */
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--bearing))
+    translateY(-18px);
+}

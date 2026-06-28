@@ -170,7 +170,7 @@ function TransitMap({
           </LayersControl.Overlay>
         }
         {bCycleStations.length > 0
-          && <LayersControl.Overlay checked={true} name="BCycle Stations">
+          && <LayersControl.Overlay checked={false} name="BCycle Stations">
             <LayerGroup>
               {bCycleStations.map((item, _index) => (
                   <BCycleMarker key={item.station_id} station={item}></BCycleMarker>
